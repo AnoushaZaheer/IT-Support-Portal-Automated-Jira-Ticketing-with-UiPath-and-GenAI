@@ -1,0 +1,49 @@
+{
+  "$schema": "https://cloud.uipath.com/draft/2024-12/entry-point",
+  "entryPoints": [
+    {
+      "filePath": "Main.xaml",
+      "uniqueId": "393ec757-fdfe-4870-8179-66c93e6c5d97",
+      "type": "process",
+      "input": {
+        "type": "object",
+        "properties": {
+          "in_EmployeeName": {
+            "type": "string",
+            "x-default-expression": "\"Test Employee\"",
+            "default": "Test Employee"
+          },
+          "in_Description": {
+            "type": "string",
+            "x-default-expression": "\"VPN disconnects every time I connect from home and I cannot reach internal apps.\"",
+            "default": "VPN disconnects every time I connect from home and I cannot reach internal apps."
+          }
+        },
+        "required": []
+      },
+      "output": {
+        "type": "object",
+        "properties": {
+          "out_IssueKey": {
+            "type": "string"
+          },
+          "out_IssueUrl": {
+            "type": "string"
+          },
+          "out_Category": {
+            "type": "string"
+          },
+          "out_Priority": {
+            "type": "string"
+          },
+          "out_SupportTeam": {
+            "type": "string"
+          },
+          "out_Status": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  ]
+}

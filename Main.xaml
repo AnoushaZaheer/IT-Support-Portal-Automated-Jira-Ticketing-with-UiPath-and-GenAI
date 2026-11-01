@@ -1,0 +1,185 @@
+<Activity mc:Ignorable="sap sap2010" x:Class="Main" this:Main.in_EmployeeName="Test Employee" this:Main.in_Description="VPN disconnects every time I connect from home and I cannot reach internal apps." VisualBasic.Settings="{x:Null}" sap2010:WorkflowViewState.IdRef="ActivityBuilder_1" xmlns="http://schemas.microsoft.com/netfx/2009/xaml/activities" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:sap="http://schemas.microsoft.com/netfx/2009/xaml/activities/presentation" xmlns:sap2010="http://schemas.microsoft.com/netfx/2010/xaml/activities/presentation" xmlns:scg="clr-namespace:System.Collections.Generic;assembly=System.Private.CoreLib" xmlns:sco="clr-namespace:System.Collections.ObjectModel;assembly=System.Private.CoreLib" xmlns:ss="clr-namespace:System.Security;assembly=System.Private.CoreLib" xmlns:this="clr-namespace:" xmlns:ui="http://schemas.uipath.com/workflow/activities" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <x:Members>
+    <x:Property Name="in_EmployeeName" Type="InArgument(x:String)" />
+    <x:Property Name="in_Description" Type="InArgument(x:String)" />
+    <x:Property Name="out_IssueKey" Type="OutArgument(x:String)" />
+    <x:Property Name="out_IssueUrl" Type="OutArgument(x:String)" />
+    <x:Property Name="out_Category" Type="OutArgument(x:String)" />
+    <x:Property Name="out_Priority" Type="OutArgument(x:String)" />
+    <x:Property Name="out_SupportTeam" Type="OutArgument(x:String)" />
+    <x:Property Name="out_Status" Type="OutArgument(x:String)" />
+  </x:Members>
+  <TextExpression.NamespacesForImplementation>
+    <sco:Collection x:TypeArguments="x:String">
+      <x:String>System.Activities</x:String>
+      <x:String>System.Activities.Statements</x:String>
+      <x:String>System.Activities.Expressions</x:String>
+      <x:String>Microsoft.VisualBasic</x:String>
+      <x:String>Microsoft.VisualBasic.Activities</x:String>
+      <x:String>System</x:String>
+      <x:String>System.Collections</x:String>
+      <x:String>System.Collections.Generic</x:String>
+      <x:String>System.Collections.ObjectModel</x:String>
+      <x:String>System.Linq</x:String>
+      <x:String>System.Net</x:String>
+      <x:String>System.Security</x:String>
+      <x:String>UiPath.Core</x:String>
+      <x:String>UiPath.Core.Activities</x:String>
+      <x:String>System.Windows.Markup</x:String>
+    </sco:Collection>
+  </TextExpression.NamespacesForImplementation>
+  <TextExpression.ReferencesForImplementation>
+    <sco:Collection x:TypeArguments="AssemblyReference">
+      <AssemblyReference>System.Activities</AssemblyReference>
+      <AssemblyReference>Microsoft.VisualBasic</AssemblyReference>
+      <AssemblyReference>System.Private.CoreLib</AssemblyReference>
+      <AssemblyReference>mscorlib</AssemblyReference>
+      <AssemblyReference>System</AssemblyReference>
+      <AssemblyReference>System.Linq</AssemblyReference>
+      <AssemblyReference>System.Core</AssemblyReference>
+      <AssemblyReference>System.Net.Primitives</AssemblyReference>
+      <AssemblyReference>System.Runtime</AssemblyReference>
+      <AssemblyReference>UiPath.System.Activities</AssemblyReference>
+      <AssemblyReference>System.ObjectModel</AssemblyReference>
+      <AssemblyReference>System.ComponentModel.TypeConverter</AssemblyReference>
+    </sco:Collection>
+  </TextExpression.ReferencesForImplementation>
+  <Sequence DisplayName="Main Sequence" sap2010:WorkflowViewState.IdRef="Sequence_1">
+    <Sequence.Variables>
+      <Variable x:TypeArguments="x:String" Name="strCategory" />
+      <Variable x:TypeArguments="x:String" Name="strSubcategory" />
+      <Variable x:TypeArguments="x:String" Name="strAiPriority" />
+      <Variable x:TypeArguments="x:String" Name="strComponent" />
+      <Variable x:TypeArguments="x:String" Name="strJiraPriority" />
+      <Variable x:TypeArguments="x:String" Name="strSummary" />
+      <Variable x:TypeArguments="x:String" Name="strFullDesc" />
+      <Variable x:TypeArguments="x:String" Name="strAssignee" />
+      <Variable x:TypeArguments="x:Double" Name="dblConfidence" />
+      <Variable x:TypeArguments="x:Object" Name="objJiraSite" />
+      <Variable x:TypeArguments="x:Object" Name="objProjectKey" />
+      <Variable x:TypeArguments="x:String" Name="strJiraSite" />
+      <Variable x:TypeArguments="x:String" Name="strProjectKey" />
+      <Variable x:TypeArguments="x:String" Name="strJiraEmail" />
+      <Variable x:TypeArguments="ss:SecureString" Name="secToken" />
+      <Variable x:TypeArguments="x:String" Name="strJiraToken" />
+    </Sequence.Variables>
+
+    <!-- 1. Validate input -->
+    <If DisplayName="Validate Description" Condition="[String.IsNullOrWhiteSpace(in_Description) OrElse in_Description.Trim.Length &lt; 15]">
+      <If.Then>
+        <Throw DisplayName="Throw Invalid Input" Exception="[New System.Exception(&quot;Please describe your issue in at least 15 characters.&quot;)]" />
+      </If.Then>
+    </If>
+
+    <!-- 2. Read Jira config from Orchestrator Assets -->
+    <ui:GetRobotAsset AssetName="Jira_Site" DisplayName="Get Asset - Jira_Site">
+      <ui:GetRobotAsset.Value>
+        <OutArgument x:TypeArguments="x:Object">[objJiraSite]</OutArgument>
+      </ui:GetRobotAsset.Value>
+    </ui:GetRobotAsset>
+    <ui:GetRobotAsset AssetName="Jira_ProjectKey" DisplayName="Get Asset - Jira_ProjectKey">
+      <ui:GetRobotAsset.Value>
+        <OutArgument x:TypeArguments="x:Object">[objProjectKey]</OutArgument>
+      </ui:GetRobotAsset.Value>
+    </ui:GetRobotAsset>
+    <ui:GetRobotCredential AssetName="Jira_Credential" DisplayName="Get Credential - Jira_Credential" Username="[strJiraEmail]" Password="[secToken]" />
+    <Assign DisplayName="Assign strJiraSite">
+      <Assign.To><OutArgument x:TypeArguments="x:String">[strJiraSite]</OutArgument></Assign.To>
+      <Assign.Value><InArgument x:TypeArguments="x:String">[objJiraSite.ToString.Trim.TrimEnd("/"c)]</InArgument></Assign.Value>
+    </Assign>
+    <Assign DisplayName="Assign strProjectKey">
+      <Assign.To><OutArgument x:TypeArguments="x:String">[strProjectKey]</OutArgument></Assign.To>
+      <Assign.Value><InArgument x:TypeArguments="x:String">[objProjectKey.ToString.Trim]</InArgument></Assign.Value>
+    </Assign>
+    <Assign DisplayName="Assign strJiraToken">
+      <Assign.To><OutArgument x:TypeArguments="x:String">[strJiraToken]</OutArgument></Assign.To>
+      <Assign.Value><InArgument x:TypeArguments="x:String">[New System.Net.NetworkCredential(String.Empty, secToken).Password]</InArgument></Assign.Value>
+    </Assign>
+
+    <!-- 3. AI classification -->
+    <ui:InvokeWorkflowFile ArgumentsVariable="{x:Null}" DisplayName="Invoke ClassifyIssue" WorkflowFileName="ClassifyIssue.xaml">
+      <ui:InvokeWorkflowFile.Arguments>
+        <InArgument x:TypeArguments="x:String" x:Key="in_Description">[in_Description]</InArgument>
+        <OutArgument x:TypeArguments="x:String" x:Key="out_Category">[strCategory]</OutArgument>
+        <OutArgument x:TypeArguments="x:String" x:Key="out_Subcategory">[strSubcategory]</OutArgument>
+        <OutArgument x:TypeArguments="x:String" x:Key="out_Priority">[strAiPriority]</OutArgument>
+        <OutArgument x:TypeArguments="x:Double" x:Key="out_Confidence">[dblConfidence]</OutArgument>
+      </ui:InvokeWorkflowFile.Arguments>
+    </ui:InvokeWorkflowFile>
+
+    <!-- 4. Business rules: routing -->
+    <Assign DisplayName="Assign strComponent (routing rule)">
+      <Assign.To><OutArgument x:TypeArguments="x:String">[strComponent]</OutArgument></Assign.To>
+      <Assign.Value><InArgument x:TypeArguments="x:String">[If(dblConfidence &lt; 0.6, "Triage",
+ If(strCategory = "Hardware", "Hardware",
+ If(strCategory = "Software", "Applications",
+ If(strCategory = "Network", "Network",
+ If(strCategory = "Access", "Identity",
+ If(strCategory = "Email", "Messaging", "Triage"))))))]</InArgument></Assign.Value>
+    </Assign>
+    <Assign DisplayName="Assign out_SupportTeam">
+      <Assign.To><OutArgument x:TypeArguments="x:String">[out_SupportTeam]</OutArgument></Assign.To>
+      <Assign.Value><InArgument x:TypeArguments="x:String">[If(strComponent = "Hardware", "Hardware Support",
+ If(strComponent = "Applications", "Application Support",
+ If(strComponent = "Network", "Network Support",
+ If(strComponent = "Identity", "IAM Team",
+ If(strComponent = "Messaging", "Messaging Support", "Service Desk")))))]</InArgument></Assign.Value>
+    </Assign>
+    <Assign DisplayName="Assign strJiraPriority">
+      <Assign.To><OutArgument x:TypeArguments="x:String">[strJiraPriority]</OutArgument></Assign.To>
+      <Assign.Value><InArgument x:TypeArguments="x:String">[If(strAiPriority = "Critical", "Highest",
+ If(strAiPriority = "High", "High",
+ If(strAiPriority = "Medium", "Medium", "Low")))]</InArgument></Assign.Value>
+    </Assign>
+
+    <!-- 5. Build ticket content -->
+    <Assign DisplayName="Assign strSummary">
+      <Assign.To><OutArgument x:TypeArguments="x:String">[strSummary]</OutArgument></Assign.To>
+      <Assign.Value><InArgument x:TypeArguments="x:String">[strCategory + " - " + If(in_Description.Length &gt; 60, in_Description.Substring(0, 60) + "...", in_Description)]</InArgument></Assign.Value>
+    </Assign>
+    <Assign DisplayName="Assign strFullDesc (audit trail)">
+      <Assign.To><OutArgument x:TypeArguments="x:String">[strFullDesc]</OutArgument></Assign.To>
+      <Assign.Value><InArgument x:TypeArguments="x:String">["Submitted by: " + in_EmployeeName + vbLf +
+"AI classification: " + strCategory + " / " + strSubcategory + " (confidence " + dblConfidence.ToString("0.00") + ")" + vbLf +
+"Routed to: " + out_SupportTeam + vbLf + vbLf +
+"Issue described by employee:" + vbLf + in_Description]</InArgument></Assign.Value>
+    </Assign>
+    <Assign DisplayName="Assign strAssignee">
+      <Assign.To><OutArgument x:TypeArguments="x:String">[strAssignee]</OutArgument></Assign.To>
+      <Assign.Value><InArgument x:TypeArguments="x:String">712020:c6419d17-1b84-47f2-aad7-a4d67365bed2</InArgument></Assign.Value>
+    </Assign>
+
+    <!-- 6. Create the Jira ticket -->
+    <ui:InvokeWorkflowFile ArgumentsVariable="{x:Null}" DisplayName="Invoke CreateJiraTicket" WorkflowFileName="CreateJiraTicket.xaml">
+      <ui:InvokeWorkflowFile.Arguments>
+        <InArgument x:TypeArguments="x:String" x:Key="in_JiraSite">[strJiraSite]</InArgument>
+        <InArgument x:TypeArguments="x:String" x:Key="in_JiraEmail">[strJiraEmail]</InArgument>
+        <InArgument x:TypeArguments="x:String" x:Key="in_JiraToken">[strJiraToken]</InArgument>
+        <InArgument x:TypeArguments="x:String" x:Key="in_ProjectKey">[strProjectKey]</InArgument>
+        <InArgument x:TypeArguments="x:String" x:Key="in_Summary">[strSummary]</InArgument>
+        <InArgument x:TypeArguments="x:String" x:Key="in_Description">[strFullDesc]</InArgument>
+        <InArgument x:TypeArguments="x:String" x:Key="in_IssueType">Task</InArgument>
+        <InArgument x:TypeArguments="x:String" x:Key="in_Priority">[strJiraPriority]</InArgument>
+        <InArgument x:TypeArguments="x:String" x:Key="in_Component">[strComponent]</InArgument>
+        <InArgument x:TypeArguments="x:String" x:Key="in_AssigneeId">[strAssignee]</InArgument>
+        <OutArgument x:TypeArguments="x:String" x:Key="out_IssueKey">[out_IssueKey]</OutArgument>
+        <OutArgument x:TypeArguments="x:String" x:Key="out_IssueUrl">[out_IssueUrl]</OutArgument>
+      </ui:InvokeWorkflowFile.Arguments>
+    </ui:InvokeWorkflowFile>
+
+    <!-- 7. Outputs -->
+    <Assign DisplayName="Assign out_Category">
+      <Assign.To><OutArgument x:TypeArguments="x:String">[out_Category]</OutArgument></Assign.To>
+      <Assign.Value><InArgument x:TypeArguments="x:String">[strCategory]</InArgument></Assign.Value>
+    </Assign>
+    <Assign DisplayName="Assign out_Priority">
+      <Assign.To><OutArgument x:TypeArguments="x:String">[out_Priority]</OutArgument></Assign.To>
+      <Assign.Value><InArgument x:TypeArguments="x:String">[strJiraPriority]</InArgument></Assign.Value>
+    </Assign>
+    <Assign DisplayName="Assign out_Status">
+      <Assign.To><OutArgument x:TypeArguments="x:String">[out_Status]</OutArgument></Assign.To>
+      <Assign.Value><InArgument x:TypeArguments="x:String">To Do</InArgument></Assign.Value>
+    </Assign>
+    <ui:LogMessage DisplayName="Log Result" Level="Info" Message="[out_IssueKey + &quot; | &quot; + out_Category + &quot; | &quot; + out_SupportTeam + &quot; | &quot; + out_Status + &quot; | &quot; + out_IssueUrl]" />
+  </Sequence>
+</Activity>

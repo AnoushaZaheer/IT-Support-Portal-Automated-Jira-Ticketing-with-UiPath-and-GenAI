@@ -1,0 +1,6 @@
+{
+  "Name": "IT Support Portal",
+  "ProjectType": "Process",
+  "Description": "Blank Process",
+  "MainFile": "Main.xaml"
+}
